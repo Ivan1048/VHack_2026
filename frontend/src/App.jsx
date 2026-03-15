@@ -66,9 +66,19 @@ export default function App() {
               txn_id: t.transaction.txn_id,
               user_id: t.transaction.user_id,
               amount: t.transaction.amount,
+              location: t.transaction.location || "Online",
+              device_type: t.transaction.device_id || "Unknown Device",
+              merchant_category: t.transaction.merchant_category || "Retail",
+              timestamp: t.transaction.timestamp || new Date().toISOString(),
             };
           }
-          return t;
+          return {
+            ...t,
+            location: t.location || "Online",
+            device_type: t.device_type || "Unknown Device",
+            merchant_category: t.merchant_category || "Retail",
+            timestamp: t.timestamp || new Date().toISOString()
+          };
         });
         
         setTransactions(formattedTxns.reverse());
@@ -104,8 +114,8 @@ export default function App() {
   return (
     <div className="page">
       <header className="hero">
-        <h1>Wallet Fraud Monitoring</h1>
-        <p>Streaming transaction risk, alerts, and decisions in near real-time.</p>
+        <h1>FraudShield</h1>
+        <p>Real-time fraud monitoring and detection prototype.</p>
       </header>
 
       {error && <p className="error">{error}</p>}
