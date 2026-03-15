@@ -10,11 +10,14 @@ const LOCATIONS = [
 
 const DEVICES = ["iPhone", "Android", "Desktop", "Unknown Device"];
 
+const MERCHANTS = ["Retail", "Food & Beverage", "Travel", "Online Subscriptions", "Electronics"];
+
 export function TransactionSimulator({ onSimulate }) {
   const [userId, setUserId] = useState("user-100");
   const [amount, setAmount] = useState(50);
   const [location, setLocation] = useState("Kuala Lumpur");
   const [device, setDevice] = useState("iPhone");
+  const [merchant, setMerchant] = useState("Retail");
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
 
   const calculateRisk = (txnAmount, txnDevice, txnLocation) => {
@@ -63,6 +66,10 @@ export function TransactionSimulator({ onSimulate }) {
       txn_id: `sim-${Date.now().toString().slice(-6)}`,
       user_id: userId,
       amount: Number(amount),
+      location,
+      device_type: device,
+      merchant_category: merchant,
+      timestamp: new Date().toISOString(),
       risk_score,
       decision,
       fraud,
@@ -84,6 +91,7 @@ export function TransactionSimulator({ onSimulate }) {
         const randLocation =
           LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
         const randDevice = DEVICES[Math.floor(Math.random() * DEVICES.length)];
+        const randMerchant = MERCHANTS[Math.floor(Math.random() * MERCHANTS.length)];
         const randUser = `user-${Math.floor(Math.random() * 1000)}`;
 
         const { risk_score, fraud, decision, reasons } = calculateRisk(
@@ -96,6 +104,10 @@ export function TransactionSimulator({ onSimulate }) {
           txn_id: `auto-${Date.now().toString().slice(-6)}`,
           user_id: randUser,
           amount: randAmount,
+          location: randLocation,
+          device_type: randDevice,
+          merchant_category: randMerchant,
+          timestamp: new Date().toISOString(),
           risk_score,
           decision,
           fraud,
@@ -152,6 +164,19 @@ export function TransactionSimulator({ onSimulate }) {
               </option>
             ))}
           </select>
+        </div>
+      </div>
+      <div className="form-row">
+        <div>
+          <label>Merchant Category</label>
+          <select value={merchant} onChange={(e) => setMerchant(e.target.value)}>
+            {MERCHANTS.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          {/* Empty flex column for spacing parity */}
         </div>
       </div>
       <div className="simulator-actions">
