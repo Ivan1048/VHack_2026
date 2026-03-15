@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Bar,
   BarChart,
@@ -14,12 +14,39 @@ import {
 } from "recharts";
 import { createTransactionsSocket, getRecentTransactions, getSummary } from "./api";
 
+import { DashboardStats } from "./components/DashboardStats";
+import { TransactionTable } from "./components/TransactionTable";
+import { TransactionSimulator } from "./components/TransactionSimulator";
+
 const COLORS = ["#0f766e", "#f59e0b", "#b91c1c"];
 
 export default function App() {
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState("");
+
+  const processNewTransaction = useCallback((liveTxn) => {
+    setTransactions((prev) => [liveTxn, ...prev].slice(0, 30));
+    setSummary((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev };
+      next.total_transactions += 1;
+      if (liveTxn.fraud) next.total_flagged += 1;
+      next.decision_breakdown = {
+        ...next.decision_breakdown,
+        [liveTxn.decision]: (next.decision_breakdown[liveTxn.decision] || 0) + 1,
+      };
+      if (liveTxn.risk_score < 40) next.risk_buckets["0-39"] += 1;
+      else if (liveTxn.risk_score < 70) next.risk_buckets["40-69"] += 1;
+      else next.risk_buckets["70-100"] += 1;
+
+      next.fraud_rate_percent = Number(
+        ((next.total_flagged / next.total_transactions) * 100).toFixed(2)
+      );
+
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let socket;
@@ -31,7 +58,20 @@ export default function App() {
           getRecentTransactions(30),
         ]);
         setSummary(summaryData);
-        setTransactions(txns.reverse());
+        
+        const formattedTxns = txns.map(t => {
+          if (t.transaction) {
+            return {
+              ...t,
+              txn_id: t.transaction.txn_id,
+              user_id: t.transaction.user_id,
+              amount: t.transaction.amount,
+            };
+          }
+          return t;
+        });
+        
+        setTransactions(formattedTxns.reverse());
       } catch (err) {
         setError(err.message);
       }
@@ -39,31 +79,10 @@ export default function App() {
 
     bootstrap();
 
-    socket = createTransactionsSocket((liveTxn) => {
-      setTransactions((prev) => [liveTxn, ...prev].slice(0, 30));
-      setSummary((prev) => {
-        if (!prev) return prev;
-        const next = { ...prev };
-        next.total_transactions += 1;
-        if (liveTxn.fraud) next.total_flagged += 1;
-        next.decision_breakdown = {
-          ...next.decision_breakdown,
-          [liveTxn.decision]: (next.decision_breakdown[liveTxn.decision] || 0) + 1,
-        };
-        if (liveTxn.risk_score < 40) next.risk_buckets["0-39"] += 1;
-        else if (liveTxn.risk_score < 70) next.risk_buckets["40-69"] += 1;
-        else next.risk_buckets["70-100"] += 1;
-
-        next.fraud_rate_percent = Number(
-          ((next.total_flagged / next.total_transactions) * 100).toFixed(2)
-        );
-
-        return next;
-      });
-    });
+    socket = createTransactionsSocket(processNewTransaction);
 
     return () => socket?.close();
-  }, []);
+  }, [processNewTransaction]);
 
   const bucketData = useMemo(() => {
     if (!summary) return [];
@@ -91,16 +110,14 @@ export default function App() {
 
       {error && <p className="error">{error}</p>}
 
-      <section className="stats-grid">
-        <StatCard label="Total Transactions" value={summary?.total_transactions ?? 0} />
-        <StatCard label="Flagged Fraud" value={summary?.total_flagged ?? 0} />
-        <StatCard label="Fraud Rate" value={`${summary?.fraud_rate_percent ?? 0}%`} />
-      </section>
+      <DashboardStats summary={summary} />
 
-      <section className="charts-grid">
+      <section className="charts-grid dashboard-top-layout">
+        <TransactionSimulator onSimulate={processNewTransaction} />
+
         <article className="card">
           <h2>Risk Score Distribution</h2>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart data={bucketData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -117,9 +134,9 @@ export default function App() {
 
         <article className="card">
           <h2>Decision Breakdown</h2>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={decisionData} dataKey="value" nameKey="name" outerRadius={85}>
+              <Pie data={decisionData} dataKey="value" nameKey="name" outerRadius={70}>
                 {decisionData.map((entry, idx) => (
                   <Cell key={entry.name} fill={COLORS[idx % COLORS.length]} />
                 ))}
@@ -131,54 +148,8 @@ export default function App() {
         </article>
       </section>
 
-      <section className="card">
-        <h2>Live Transaction Feed</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Txn ID</th>
-                <th>User</th>
-                <th>Amount</th>
-                <th>Risk</th>
-                <th>Decision</th>
-                <th>Reasons</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((txn) => (
-                <tr key={txn.txn_id}>
-                  <td>{txn.txn_id}</td>
-                  <td>{txn.user_id}</td>
-                  <td>${Number(txn.amount).toFixed(2)}</td>
-                  <td>
-                    <span className={`risk risk-${bucketClass(txn.risk_score)}`}>
-                      {txn.risk_score}
-                    </span>
-                  </td>
-                  <td>{txn.decision}</td>
-                  <td>{(txn.reasons || []).join(", ")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <TransactionTable transactions={transactions} />
     </div>
   );
 }
 
-function StatCard({ label, value }) {
-  return (
-    <article className="card stat-card">
-      <p>{label}</p>
-      <h3>{value}</h3>
-    </article>
-  );
-}
-
-function bucketClass(score) {
-  if (score < 40) return "low";
-  if (score < 70) return "medium";
-  return "high";
-}
