@@ -8,6 +8,14 @@ const LOCATIONS = [
   "Manila",
 ];
 
+const LOCATION_COORDS = {
+  "Kuala Lumpur": { lat: 3.139, lng: 101.6869 },
+  Singapore: { lat: 1.3521, lng: 103.8198 },
+  Jakarta: { lat: -6.2088, lng: 106.8456 },
+  Bangkok: { lat: 13.7563, lng: 100.5018 },
+  Manila: { lat: 14.5995, lng: 120.9842 },
+};
+
 const DEVICES = ["iPhone", "Android", "Desktop", "Unknown Device"];
 
 const MERCHANTS = ["Retail", "Food & Beverage", "Travel", "Online Subscriptions", "Electronics"];
@@ -67,6 +75,7 @@ export function TransactionSimulator({ onSimulate }) {
       user_id: userId,
       amount: Number(amount),
       location,
+      location_coords: LOCATION_COORDS[location] || LOCATION_COORDS["Kuala Lumpur"],
       device_type: device,
       merchant_category: merchant,
       timestamp: new Date().toISOString(),
@@ -105,6 +114,7 @@ export function TransactionSimulator({ onSimulate }) {
           user_id: randUser,
           amount: randAmount,
           location: randLocation,
+          location_coords: LOCATION_COORDS[randLocation],
           device_type: randDevice,
           merchant_category: randMerchant,
           timestamp: new Date().toISOString(),
