@@ -17,6 +17,7 @@ import { createTransactionsSocket, getRecentTransactions, getSummary } from "./a
 import { DashboardStats } from "./components/DashboardStats";
 import { TransactionTable } from "./components/TransactionTable";
 import { TransactionSimulator } from "./components/TransactionSimulator";
+import { FraudMap } from "./components/Fraudmap";
 
 const COLORS = ["#0f766e", "#f59e0b", "#b91c1c"];
 
@@ -145,6 +146,13 @@ export default function App() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
+        </article>
+      </section>
+        <section className="charts-grid">
+
+        <article className="card">
+         <h2>Fraud Location Map</h2>
+          <FraudMap transactions={transactions} />
         </article>
       </section>
 

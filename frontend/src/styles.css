@@ -2,9 +2,9 @@
   --bg: #f4f6ef;
   --ink: #1f2937;
   --card: #ffffff;
-  --accent: #0f766e;
-  --warn: #d97706;
-  --danger: #b91c1c;
+  --accent: #0f766e;   /* Safe / Approved */
+  --warn: #d97706;     /* Medium / Review */
+  --danger: #b91c1c;   /* High / Declined */
   --muted: #6b7280;
 }
 
@@ -102,18 +102,34 @@ td {
   min-width: 44px;
   padding: 0.15rem 0.45rem;
   text-align: center;
+  font-weight: 600;
 }
 
 .risk-low {
-  background: var(--accent);
+  background: var(--accent);   /* Green */
 }
 
 .risk-medium {
-  background: var(--warn);
+  background: var(--warn);     /* Orange */
 }
 
 .risk-high {
-  background: var(--danger);
+  background: var(--danger);   /* Red */
+}
+
+/* Legend styling for FraudMap */
+.info.legend {
+  background: var(--card);
+  padding: 0.6rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.info.legend h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  color: var(--ink);
 }
 
 @media (max-width: 720px) {
@@ -126,6 +142,99 @@ td {
     padding: 0.45rem;
   }
 }
+
+/* Simulator Styles */
+.dashboard-top-layout {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.simulator-card h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.form-row > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.form-row label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+  font-weight: 500;
+}
+
+.form-row input,
+.form-row select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+  border-color: var(--accent);
+}
+
+.simulator-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+.btn {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex: 1;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: var(--ink);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: white;
+}
+
 
 /* Simulator Styles */
 .dashboard-top-layout {
