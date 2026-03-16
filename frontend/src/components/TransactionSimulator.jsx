@@ -1,31 +1,23 @@
-import { useEffect } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useEffect } from "react";
 
-// Custom colored icons
-const greenIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+const LOCATIONS = [
+  "Kuala Lumpur",
+  "Singapore",
+  "Jakarta",
+  "Bangkok",
+  "Manila",
+];
 
-const orangeIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+const LOCATION_COORDS = {
+  "Kuala Lumpur": { lat: 3.139, lng: 101.6869 },
+  Singapore: { lat: 1.3521, lng: 103.8198 },
+  Jakarta: { lat: -6.2088, lng: 106.8456 },
+  Bangkok: { lat: 13.7563, lng: 100.5018 },
+  Manila: { lat: 14.5995, lng: 120.9842 },
+};
 
-<<<<<<< HEAD
+const DEVICES = ["iPhone", "Android", "Desktop", "Unknown Device"];
+
 const MERCHANTS = ["Retail", "Food & Beverage", "Travel", "Online Subscriptions", "Electronics"];
 
 export function TransactionSimulator({ onSimulate }) {
@@ -83,6 +75,7 @@ export function TransactionSimulator({ onSimulate }) {
       user_id: userId,
       amount: Number(amount),
       location,
+      location_coords: LOCATION_COORDS[location] || LOCATION_COORDS["Kuala Lumpur"],
       device_type: device,
       merchant_category: merchant,
       timestamp: new Date().toISOString(),
@@ -94,22 +87,8 @@ export function TransactionSimulator({ onSimulate }) {
 
     onSimulate(newTxn);
   };
-=======
-const redIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
->>>>>>> edward
 
-const FraudMap = ({ transactions }) => {
   useEffect(() => {
-<<<<<<< HEAD
     let interval;
     if (isAutoSimulating) {
       interval = setInterval(() => {
@@ -123,20 +102,19 @@ const FraudMap = ({ transactions }) => {
         const randDevice = DEVICES[Math.floor(Math.random() * DEVICES.length)];
         const randMerchant = MERCHANTS[Math.floor(Math.random() * MERCHANTS.length)];
         const randUser = `user-${Math.floor(Math.random() * 1000)}`;
-=======
-    const map = L.map("fraud-map").setView([3.139, 101.6869], 5);
->>>>>>> edward
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map);
+        const { risk_score, fraud, decision, reasons } = calculateRisk(
+          randAmount,
+          randDevice,
+          randLocation
+        );
 
-<<<<<<< HEAD
         const newTxn = {
           txn_id: `auto-${Date.now().toString().slice(-6)}`,
           user_id: randUser,
           amount: randAmount,
           location: randLocation,
+          location_coords: LOCATION_COORDS[randLocation],
           device_type: randDevice,
           merchant_category: randMerchant,
           timestamp: new Date().toISOString(),
@@ -145,52 +123,14 @@ const FraudMap = ({ transactions }) => {
           fraud,
           reasons,
         };
-=======
-    transactions.forEach((txn) => {
-      if (txn.location_coords) {
-        // Pick icon based on decision
-        let icon = greenIcon;
-        if (txn.decision === "Requires Review") {
-          icon = orangeIcon;
-        } else if (txn.decision === "Declined") {
-          icon = redIcon;
-        }
->>>>>>> edward
 
-        const marker = L.marker(
-          [txn.location_coords.lat, txn.location_coords.lng],
-          { icon }
-        ).addTo(map);
-
-        marker.bindPopup(`
-          <b>User:</b> ${txn.user_id}<br/>
-          <b>Amount:</b> $${txn.amount}<br/>
-          <b>Risk:</b> ${txn.risk_score}<br/>
-          <b>Decision:</b> ${txn.decision}<br/>
-          <b>Location:</b> ${txn.location}
-        `);
-      }
-    });
-
-    // Add legend
-    const legend = L.control({ position: "bottomright" });
-    legend.onAdd = function () {
-      const div = L.DomUtil.create("div", "info legend");
-      div.innerHTML = `
-        <h4>Risk Legend</h4>
-        <i style="background:green; width:12px; height:12px; display:inline-block; margin-right:5px;"></i> Approved<br/>
-        <i style="background:orange; width:12px; height:12px; display:inline-block; margin-right:5px;"></i> Requires Review<br/>
-        <i style="background:red; width:12px; height:12px; display:inline-block; margin-right:5px;"></i> Declined
-      `;
-      return div;
-    };
-    legend.addTo(map);
-
-    return () => map.remove();
-  }, [transactions]);
+        onSimulate(newTxn);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoSimulating, onSimulate]);
 
   return (
-<<<<<<< HEAD
     <article className="card simulator-card">
       <h2>Transaction Simulator</h2>
       <div className="form-row">
@@ -267,11 +207,5 @@ const FraudMap = ({ transactions }) => {
         </button>
       </div>
     </article>
-=======
-    <div id="fraud-map" style={{ height: "400px", width: "100%" }}></div>
->>>>>>> edward
   );
-};
-
-export default FraudMap;
-
+}

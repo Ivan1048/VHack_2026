@@ -14,12 +14,12 @@ const FraudMap = ({ transactions }) => {
 
     // Plot transactions
     transactions.forEach(txn => {
-      if (txn.location) {
-        const marker = L.marker([txn.location.lat, txn.location.lng]).addTo(map);
+      if (txn.location_coords) {
+        const marker = L.marker([txn.location_coords.lat, txn.location_coords.lng]).addTo(map);
         marker.bindPopup(`
-          <b>User:</b> ${txn.user}<br/>
+          <b>User:</b> ${txn.user_id || txn.user}<br/>
           <b>Amount:</b> $${txn.amount}<br/>
-          <b>Risk:</b> ${txn.risk}<br/>
+          <b>Risk:</b> ${txn.risk_score || txn.risk}<br/>
           <b>Decision:</b> ${txn.decision}
         `);
       }

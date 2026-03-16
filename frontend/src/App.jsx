@@ -17,7 +17,7 @@ import { createTransactionsSocket, getRecentTransactions, getSummary } from "./a
 import { DashboardStats } from "./components/DashboardStats";
 import { TransactionTable } from "./components/TransactionTable";
 import { TransactionSimulator } from "./components/TransactionSimulator";
-import { FraudMap } from "./components/Fraudmap";
+import FraudMap from "./components/FraudMap";
 
 const COLORS = ["#0f766e", "#f59e0b", "#b91c1c"];
 
@@ -59,7 +59,7 @@ export default function App() {
           getRecentTransactions(30),
         ]);
         setSummary(summaryData);
-        
+
         const formattedTxns = txns.map(t => {
           if (t.transaction) {
             return {
@@ -81,7 +81,7 @@ export default function App() {
             timestamp: t.timestamp || new Date().toISOString()
           };
         });
-        
+
         setTransactions(formattedTxns.reverse());
       } catch (err) {
         setError(err.message);
@@ -158,10 +158,10 @@ export default function App() {
           </ResponsiveContainer>
         </article>
       </section>
-        <section className="charts-grid">
+      <section className="charts-grid">
 
         <article className="card">
-         <h2>Fraud Location Map</h2>
+          <h2>Fraud Location Map</h2>
           <FraudMap transactions={transactions} />
         </article>
       </section>
