@@ -15,6 +15,7 @@ export function TransactionTable({ transactions }) {
               <th>Device</th>
               <th>Risk</th>
               <th>Decision</th>
+              <th>Location</th>
               <th>Reasons</th>
             </tr>
           </thead>
@@ -34,6 +35,7 @@ export function TransactionTable({ transactions }) {
                   </span>
                 </td>
                 <td>{txn.decision}</td>
+                <td>{txn.location}</td>
                 <td>{(txn.reasons || []).join(", ")}</td>
               </tr>
             ))}
@@ -45,7 +47,7 @@ export function TransactionTable({ transactions }) {
 }
 
 function bucketClass(score) {
-  if (score < 40) return "low";
-  if (score < 70) return "medium";
-  return "high";
+  if (score < 40) return "low";     // green
+  if (score < 70) return "medium";  // orange
+  return "high";                    // red
 }
