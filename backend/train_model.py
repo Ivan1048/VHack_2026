@@ -4,9 +4,10 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE
 from sklearn.metrics import average_precision_score, classification_report, roc_auc_score
 from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
 
 FEATURE_ORDER = [
     "amount",
@@ -57,8 +58,22 @@ def train_and_save(output_path: str = "models/fraud_model.joblib") -> None:
     x, y = _build_synthetic_dataset()
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, stratify=y, random_state=42)
 
-    model = LogisticRegression(max_iter=400, class_weight="balanced")
-    model.fit(x_train, y_train)
+    # 1. Apply SMOTE to handle the imbalanced training data
+    print(f"Original training shape: {x_train.shape}, Fraud cases: {y_train.sum()}")
+    smote = SMOTE(random_state=42)
+    x_train_resampled, y_train_resampled = smote.fit_resample(x_train, y_train)
+    print(f"Resampled training shape: {x_train_resampled.shape}, Fraud cases: {y_train_resampled.sum()}")
+
+    # 2. Train XGBoost model
+    model = XGBClassifier(
+        n_estimators=100,
+        max_depth=4,
+        learning_rate=0.1,
+        eval_metric="logloss",
+        random_state=42,
+        use_label_encoder=False,
+    )
+    model.fit(x_train_resampled, y_train_resampled)
 
     probs = model.predict_proba(x_test)[:, 1]
     preds = (probs >= 0.5).astype(int)
