@@ -1,17 +1,36 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
 
 
-_REASON_MAP = {
-    "amount_ratio": "Unusual transaction amount",
-    "is_new_device": "New device detected",
-    "distance_from_last_km": "Location anomaly",
-    "txn_count_1h": "High transaction frequency",
-    "is_night_transaction": "Unusual transaction time",
+_REASON_MAP: dict[str, str] = {
+    "amount_ratio": "Transaction amount is unusually high compared to your spending history",
+    "is_new_device": "Payment initiated from an unrecognised device",
+    "distance_from_last_km": "Transaction location is far from your previous activity",
+    "txn_count_1h": "Unusually high number of transactions in the last hour",
+    "txn_count_24h": "Unusually high number of transactions in the last 24 hours",
+    "is_night_transaction": "Transaction occurred during unusual hours (midnight–6 AM)",
+    "is_weekend": "Weekend transaction pattern detected",
+    "merchant_risk_score": "Merchant category is associated with elevated fraud risk",
+    "ip_risk": "IP address flagged by threat intelligence",
 }
 
 
-def build_reasons(contributions: Mapping[str, float], top_k: int = 3) -> list[str]:
-    sorted_items = sorted(contributions.items(), key=lambda item: item[1], reverse=True)
+def build_reasons(
+    contributions: Mapping[str, float],
+    ip_risk: str = "clean",
+    top_k: int = 3,
+) -> list[str]:
+    """
+    Convert feature contributions and contextual signals into a prioritised
+    list of human-readable explanations shown to the user and analyst.
+    """
+    # Combine model contributions with contextual signals
+    all_signals: dict[str, float] = dict(contributions)
+    if ip_risk in ("suspicious", "blacklisted"):
+        all_signals["ip_risk"] = 0.4 if ip_risk == "blacklisted" else 0.2
+
+    sorted_items = sorted(all_signals.items(), key=lambda item: item[1], reverse=True)
     reasons: list[str] = []
 
     for feature_name, value in sorted_items:
@@ -23,7 +42,4 @@ def build_reasons(contributions: Mapping[str, float], top_k: int = 3) -> list[st
         if len(reasons) >= top_k:
             break
 
-    if not reasons:
-        reasons = ["Behavior aligns with historical pattern"]
-
-    return reasons
+    return reasons if reasons else ["Transaction behaviour aligns with your historical pattern"]

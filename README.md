@@ -1,8 +1,23 @@
-# VHack_2026
+# VHack 2026: Case Study 2 - Digital Trust (Transaction Fraud)
 
-Real-Time Fraud Detection System for digital wallet transactions.
+**Project Name:** FraudShield v2.0
+**Track:** Case Study 2 – Digital Trust: Real-Time Fraud Shield for the Unbanked
 
-## Project Layout
+## Overview
+
+FraudShield is a real-time, AI-powered fraud detection system designed specifically for digital wallets in the ASEAN region. It addresses the critical challenge of protecting unbanked populations from sophisticated financial crimes while ensuring low friction for legitimate users.
+
+### Key Features (v2.0 Upgrade)
+
+- **Real-Time Streaming Architecture:** Built on FastAPI and WebSockets, ensuring sub-50ms latency for transaction scoring and instant dashboard updates.
+- **Advanced Machine Learning Pipeline:** Utilises an optimized `XGBClassifier` trained on synthetically balanced data (using SMOTE) to detect anomalous behavioural patterns.
+- **Contextual Enrichment:** Integrates a simulated Threat Intelligence module to evaluate IP reputation, adjusting risk scores dynamically.
+- **Privacy-First Design:** Implements one-way hashing and masking for Personally Identifiable Information (PII) before data reaches the dashboard, ensuring compliance with data protection standards.
+- **Dynamic Decision Thresholds:** Features a reinforcement feedback loop. Security analysts can review flagged transactions on the dashboard, and their feedback (True/False Positives) automatically nudges the decision thresholds (Approve/OTP/Block).
+- **Explainable AI (XAI):** Translates complex feature contributions into human-readable explanations (e.g., "Transaction location is far from your previous activity"), building trust with both users and analysts.
+- **Interactive Dashboard:** A React-based frontend featuring live transaction feeds, interactive risk distribution charts, and a geospatial fraud map covering the ASEAN region.
+
+## Project Structure
 
 ```text
 .
@@ -14,6 +29,8 @@ Real-Time Fraud Detection System for digital wallet transactions.
 |   |   |-- model_service.py
 |   |   |-- decision.py
 |   |   |-- explainability.py
+|   |   |-- ip_reputation.py
+|   |   |-- privacy.py
 |   |   `-- simulator.py
 |   |-- requirements.txt
 |   `-- train_model.py
@@ -22,43 +39,37 @@ Real-Time Fraud Detection System for digital wallet transactions.
 |   |   |-- App.jsx
 |   |   |-- api.js
 |   |   |-- main.jsx
-|   |   `-- styles.css
+|   |   |-- styles.css
+|   |   `-- components/
+|   |       |-- DashboardStats.jsx
+|   |       |-- FraudMap.jsx
+|   |       |-- TransactionSimulator.jsx
+|   |       `-- TransactionTable.jsx
 |   |-- package.json
 |   `-- vite.config.js
 `-- docs/
-	|-- API_CONTRACTS.md
-	`-- INTERACTION_FLOW.md
+    |-- API_CONTRACTS.md
+    `-- INTERACTION_FLOW.md
 ```
 
-## Architecture Summary
+## Setup Instructions
 
-Online flow:
-1. Transaction arrives at `POST /predict`
-2. Feature Engineering computes behavioral features
-3. Model Service predicts fraud probability and risk score
-4. Decision Module returns `approve`, `otp`, or `block`
-5. Explainability Module builds human-readable reasons
-6. Result is returned to API caller and streamed to dashboard via WebSocket
-
-Offline flow:
-1. Train with imbalanced data handling using `class_weight='balanced'`
-2. Save model artifact to `backend/models/fraud_model.joblib`
-3. API loads model on startup (falls back to heuristics if model not found)
-
-## Quick Start
-
-Backend:
+### 1. Backend (Python 3.11+)
 
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# Train the model (generates synthetic data and saves the artifact)
 python train_model.py
+
+# Start the API server
 uvicorn app.main:app --reload --port 8000
 ```
 
-Frontend:
+### 2. Frontend (Node.js)
 
 ```bash
 cd frontend
@@ -66,7 +77,9 @@ npm install
 npm run dev
 ```
 
-Simulator:
+### 3. Simulation
+
+You can generate live traffic using the built-in simulator on the frontend dashboard, or run the headless script:
 
 ```bash
 cd backend
@@ -74,24 +87,9 @@ source .venv/bin/activate
 python -m app.simulator
 ```
 
-## API Endpoints
+## Technical Alignment with Case Study
 
-- `POST /predict`: score transaction and return risk + reasons
-- `GET /dashboard/summary`: totals, fraud rate, risk buckets
-- `GET /transactions/recent?limit=30`: recent scored transactions
-- `WS /ws/transactions`: live transaction event stream
-- `GET /health`: health check
-
-See `docs/API_CONTRACTS.md` for request/response examples.
-
-## Decision Policy
-
-- `0-39` risk score -> `approve`
-- `40-69` risk score -> `otp`
-- `70-100` risk score -> `block`
-
-## Notes for Hackathon Judges
-
-- Real-time scoring latency is surfaced via `latency_ms` in the API response.
-- Explainable output includes user-facing reasons for each flagged transaction.
-- Dashboard visualizes live feed, fraud alerts, and risk score distribution.
+- **Low Latency:** Asynchronous FastAPI endpoints and optimized feature engineering ensure lightning-fast responses.
+- **Handling Imbalanced Data:** The training pipeline explicitly uses SMOTE to balance the extreme rarity of fraud cases.
+- **False Positive Control:** The analyst feedback loop dynamically adjusts thresholds, ensuring the system adapts to prevent blocking legitimate unbanked users.
+- **Privacy-First:** User IDs are cryptographically masked before transmission to any monitoring interface.
