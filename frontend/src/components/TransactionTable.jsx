@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function TransactionTable({ transactions }) {
   return (
     <section className="card">
@@ -15,16 +17,24 @@ export function TransactionTable({ transactions }) {
               <th>Device</th>
               <th>Risk</th>
               <th>Decision</th>
-              <th>Location</th>
               <th>Reasons</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {transactions.map((txn) => (
               <tr key={txn.txn_id}>
-                <td>{txn.txn_id}</td>
+                <td>
+                  <Link to={`/transaction/${txn.txn_id}`} className="detail-link">
+                    {txn.txn_id}
+                  </Link>
+                </td>
                 <td>{new Date(txn.timestamp).toLocaleTimeString()}</td>
-                <td>{txn.user_id}</td>
+                <td>
+                  <Link to={`/user-profile?user=${txn.user_id}`} className="detail-link">
+                    {txn.user_id}
+                  </Link>
+                </td>
                 <td>${Number(txn.amount).toFixed(2)}</td>
                 <td>{txn.merchant_category}</td>
                 <td>{txn.location}</td>
@@ -35,8 +45,12 @@ export function TransactionTable({ transactions }) {
                   </span>
                 </td>
                 <td>{txn.decision}</td>
-                <td>{txn.location}</td>
                 <td>{(txn.reasons || []).join(", ")}</td>
+                <td>
+                  <Link to={`/transaction/${txn.txn_id}`} className="detail-link">
+                    View →
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -47,7 +61,7 @@ export function TransactionTable({ transactions }) {
 }
 
 function bucketClass(score) {
-  if (score < 40) return "low";     // green
-  if (score < 70) return "medium";  // orange
-  return "high";                    // red
+  if (score < 40) return "low";
+  if (score < 70) return "medium";
+  return "high";
 }

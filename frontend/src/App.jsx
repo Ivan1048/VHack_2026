@@ -1,33 +1,22 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useEffect, useState, useCallback } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { createTransactionsSocket, getRecentTransactions, getSummary } from "./api";
 
-import { DashboardStats } from "./components/DashboardStats";
-import { TransactionTable } from "./components/TransactionTable";
-import { TransactionSimulator } from "./components/TransactionSimulator";
-import FraudMap from "./components/FraudMap";
-
-const COLORS = ["#0f766e", "#f59e0b", "#b91c1c"];
+import Sidebar from "./components/Sidebar";
+import LandingPage from "./pages/LandingPage";
+import DashboardPage from "./pages/DashboardPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import TransactionDetail from "./pages/TransactionDetail";
+import UserProfile from "./pages/UserProfile";
 
 export default function App() {
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState("");
+  const location = useLocation();
 
   const processNewTransaction = useCallback((liveTxn) => {
-    setTransactions((prev) => [liveTxn, ...prev].slice(0, 30));
+    setTransactions((prev) => [liveTxn, ...prev].slice(0, 50));
     setSummary((prev) => {
       if (!prev) return prev;
       const next = { ...prev };
@@ -44,7 +33,6 @@ export default function App() {
       next.fraud_rate_percent = Number(
         ((next.total_flagged / next.total_transactions) * 100).toFixed(2)
       );
-
       return next;
     });
   }, []);
@@ -60,7 +48,7 @@ export default function App() {
         ]);
         setSummary(summaryData);
 
-        const formattedTxns = txns.map(t => {
+        const formattedTxns = txns.map((t) => {
           if (t.transaction) {
             return {
               ...t,
@@ -78,7 +66,7 @@ export default function App() {
             location: t.location || "Online",
             device_type: t.device_type || "Unknown Device",
             merchant_category: t.merchant_category || "Retail",
-            timestamp: t.timestamp || new Date().toISOString()
+            timestamp: t.timestamp || new Date().toISOString(),
           };
         });
 
@@ -89,85 +77,48 @@ export default function App() {
     }
 
     bootstrap();
-
     socket = createTransactionsSocket(processNewTransaction);
-
     return () => socket?.close();
   }, [processNewTransaction]);
 
-  const bucketData = useMemo(() => {
-    if (!summary) return [];
-    return Object.entries(summary.risk_buckets).map(([name, value], idx) => ({
-      name,
-      value,
-      color: COLORS[idx],
-    }));
-  }, [summary]);
+  /* Landing page gets its own full-width layout (no sidebar) */
+  const isLanding = location.pathname === "/";
 
-  const decisionData = useMemo(() => {
-    if (!summary) return [];
-    return Object.entries(summary.decision_breakdown).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [summary]);
+  if (isLanding) {
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
+    );
+  }
 
   return (
-    <div className="page">
-      <header className="hero">
-        <h1>FraudShield</h1>
-        <p>Real-time fraud monitoring and detection prototype.</p>
-      </header>
-
-      {error && <p className="error">{error}</p>}
-
-      <DashboardStats summary={summary} />
-
-      <section className="charts-grid dashboard-top-layout">
-        <TransactionSimulator onSimulate={processNewTransaction} />
-
-        <article className="card">
-          <h2>Risk Score Distribution</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={bucketData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value">
-                {bucketData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </article>
-
-        <article className="card">
-          <h2>Decision Breakdown</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={decisionData} dataKey="value" nameKey="name" outerRadius={70}>
-                {decisionData.map((entry, idx) => (
-                  <Cell key={entry.name} fill={COLORS[idx % COLORS.length]} />
-                ))}
-              </Pie>
-              <Legend />
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </article>
-      </section>
-      <section className="charts-grid">
-
-        <article className="card">
-          <h2>Fraud Location Map</h2>
-          <FraudMap transactions={transactions} />
-        </article>
-      </section>
-
-      <TransactionTable transactions={transactions} />
+    <div className="app-layout">
+      <Sidebar />
+      <main className="app-main">
+        <Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                summary={summary}
+                transactions={transactions}
+                processNewTransaction={processNewTransaction}
+                error={error}
+              />
+            }
+          />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route
+            path="/transaction/:id"
+            element={<TransactionDetail transactions={transactions} />}
+          />
+          <Route
+            path="/user-profile"
+            element={<UserProfile transactions={transactions} />}
+          />
+        </Routes>
+      </main>
     </div>
   );
 }
-
