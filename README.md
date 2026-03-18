@@ -25,6 +25,10 @@ Real-Time Fraud Detection System for digital wallet transactions.
 |   |   `-- styles.css
 |   |-- package.json
 |   `-- vite.config.js
+|-- fraud_engine/
+|   |-- schemas.py
+|   |-- model.py
+|   `-- router.py
 `-- docs/
 	|-- API_CONTRACTS.md
 	`-- INTERACTION_FLOW.md
@@ -42,7 +46,7 @@ Online flow:
 
 Offline flow:
 1. Train with imbalanced data handling using `class_weight='balanced'`
-2. Save model artifact to `backend/models/fraud_model.joblib`
+2. Save model artifact to `backend/models/fraud_model.joblib`gu
 3. API loads model on startup (falls back to heuristics if model not found)
 
 ## Quick Start

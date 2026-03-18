@@ -13,6 +13,7 @@ from .explainability import build_reasons
 from .feature_engineering import build_features
 from .model_service import ModelService
 from .schemas import DashboardSummary, PredictionResponse, TransactionIn, TransactionRecord
+from fraud_engine.router import router as fraud_router
 
 app = FastAPI(title="Fraud Detection API", version="0.1.0")
 app.add_middleware(
@@ -22,6 +23,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(fraud_router)
 
 model_service = ModelService()
 transaction_store: deque[TransactionRecord] = deque(maxlen=10000)
