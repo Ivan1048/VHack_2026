@@ -93,3 +93,51 @@ async def predict_fraud(transaction: Transaction):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+def predict_on_transaction(tx_dict):
+    """
+    Synchronous wrapper for real-time simulation in main.py.
+    """
+    global model
+    if model is None:
+        load_model()
+    
+    if model is None:
+        # Fallback if model still not loaded
+        return {
+            "transaction_id": tx_dict.get('transaction_id', 'Unknown'),
+            "risk_score": 0.0,
+            "is_fraud": False,
+            "message": "Model not loaded"
+        }
+
+    # Use the same logic as predict_fraud
+    user_id = tx_dict['user_id']
+    if user_id not in user_history_cache:
+        user_history_cache[user_id] = {
+            'user_avg_amount': tx_dict['transaction_amount'],
+            'last_tx_time': None,
+            'merchant_freq': 0.05,
+            'location_freq': 0.05,
+            'primary_device_id': tx_dict['device_id'],
+            'tx_count': 0
+        }
+    
+    history = user_history_cache[user_id]
+    features_df = preprocess_for_inference(tx_dict, history)
+    fraud_prob = model.predict_proba(features_df)[0][1]
+    risk_score = round(float(fraud_prob) * 100, 2)
+    is_fraud = bool(risk_score > 50)
+    
+    # Update history (synchronous)
+    import pandas as pd_temp
+    history['tx_count'] += 1
+    history['last_tx_time'] = pd_temp.to_datetime(tx_dict['transaction_time'])
+    history['user_avg_amount'] = ((history['user_avg_amount'] * (history['tx_count'] - 1) + tx_dict['transaction_amount']) / history['tx_count'])
+    
+    return {
+        "transaction_id": tx_dict['transaction_id'],
+        "risk_score": risk_score,
+        "is_fraud": is_fraud
+    }
+
