@@ -2,7 +2,7 @@
 __pycache__/
 *.pyc
 .venv/
-backend/models/
+# backend/models/ is intentionally tracked so fraud_model.joblib deploys to Render
 
 # Node
 frontend/node_modules/
@@ -11,3 +11,7 @@ frontend/dist/
 # Editor
 .vscode/
 .DS_Store
+
+# Local env secrets (never commit these)
+.env.local
+backend/.env
