@@ -71,7 +71,11 @@ def preprocess_for_inference(transaction_dict, user_history_summary):
     df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
     df['is_night'] = ((df['hour'] < 6)).astype(int)
     
-    df['time_since_last_tx'] = (df['transaction_time'] - pd.to_datetime(user_history_summary.get('last_tx_time', df['transaction_time'] - pd.Timedelta(days=30)))).dt.total_seconds()
+    last_tx = user_history_summary.get('last_tx_time')
+    if last_tx is None:
+        last_tx = df['transaction_time'] - pd.Timedelta(days=30)
+    
+    df['time_since_last_tx'] = (df['transaction_time'] - pd.to_datetime(last_tx)).dt.total_seconds()
     df['is_rapid_tx'] = (df['time_since_last_tx'] < 3600).astype(int)
     
     df['user_avg_amount'] = user_history_summary.get('user_avg_amount', 50.0)
